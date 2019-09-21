@@ -2,6 +2,11 @@ from progressbar import *
 import socket
 import sys
 
+DATA = 0x0
+ACK = 0x1
+FIN = 0x2
+FINACK = 0x3
+
 host = '192.168.43.150' # Oksi
 port = 5005
 buffer = 1024
