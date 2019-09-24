@@ -1,38 +1,42 @@
 import file
+from packet import *
 from file import File
 import socket
 import const
 import pickle
 import time
+from progressbar import *
 
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+progress_bar = ProgressBar()
+
+# s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 # s.connect((socket.gethostname(), const.SERVER_PORT))
 
 test_file_path = '{}/test.zip'.format(file.get_current_directory())
 test_file_obj = File(test_file_path)
 
-chunkGenerator = test_file_obj.get_chunks_generator()
+chunk_generator = test_file_obj.get_chunks_generator()
 num_of_chunk = test_file_obj.calculate_chunks_number()
 
-for chunks in chunkGenerator:
-    # a+=1
-    # print(type(chunks))
-    print(len(chunks))
-print(num_of_chunk)
-# while True:
-#     time1 = time.time()
+packet_class = Packet(1)
 
-#     for i in range(10000):
-#         msg = {"msg" : str(i)}
+new = open('lala.zip', 'ab')
 
-#         tobesend = pickle.dumps(msg)
+counter = 0
+progress_bar.set_total(num_of_chunk)
+for chunk in chunk_generator:
+    packet = packet_class.create_packet(chunk)
+    # s.send(packet)
+    # ack = s.recv(1)
 
-#         s.send(tobesend)
+    new_chunk = packet_class.read_packet_from_bytes_array(packet)
 
-#         msg, sender = s.recvfrom(32)
-#         print(msg.decode("utf-8"))
+    counter += 1
+    progress_bar.printProgressBar(counter)
 
-#     time2 = time.time()
-#     print(time2-time1)
-#     a = input()
+    new.write(new_chunk)
 
+    # send file to server
+    # receive acknowledgement from server
+
+print(counter)

@@ -1,19 +1,33 @@
 import time
 
-def printProgressBar (progress, total, decimals = 0, char = '█'):
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (progress / float(total)))
-    x = int(progress * 100 // total)
-    bar = char * x + '-' * (100 - x)
+class ProgressBar:
+    def __init__(self):
+        self.total = None
+        self.start_time = None
+        self.finish_time = None
 
-    print('\rProgress: |%s| %s%%' % (bar, percent), end = '\r')
+    def set_total(self, total):
+        self.total = total
 
-    if (progress == total):
-        print('\nLoading completed', end = '\n')
+    def printProgressBar (self, progress, decimals = 0, char = '█'):
+        if (not self.start_time) :
+            self.start_time = time.time()
+        current_time = time.time() - self.start_time
 
-checksum = list(range(0, 51))
-l = len(checksum)
+        remaining_time = current_time * ((self.total/progress)-1)
 
-printProgressBar(0, l)
-for i, item in enumerate(checksum):
-    time.sleep(0.1)
-    printProgressBar(i + 1, l)
+        percent = ("{0:." + str(decimals) + "f}").format(100 * (progress / float(self.total)))
+        x = int(progress * 50 // self.total)
+        bar = char * x + '-' * (50 - x)
+
+        print('\rProgress: |{}| {:>3}% Remaining time: {:>5.1f}s'.format(bar, percent, remaining_time), end="\r")
+
+        if (progress == self.total):
+            self.finish_time = time.time()
+            print('\nElapsed time: {}s\n'.format(self.finish_time-self.start_time))
+            print('\nLoading completed', end = '\n')
+            self.start_time = None
+
+            # total_time = sekarang * total / progress
+            # sisa = total - sekarang
+            # sisa = sekarang * (total/progress-1)
