@@ -1,20 +1,54 @@
-import struct
-import socket
 import const
+import multiprocessing
 import pickle
+import socket
+import struct
 import time
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((socket.gethostname(), const.SERVER_PORT))
-s.listen(5)
 
-while True:
-    clientSocket, address = s.accept()
+portList = range(5001, 6000)
+
+def send_data(port, thread, data):
+    sendSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sendSocket.bind((const.udpIP, port))
+    # sendSocket.settimeout(5)
+
+    try:
+        sendSocket.sendto(data, (const. udpIP, port+1))
+        # print('port ==> ', port)
+        # print()
+        # print('Received message : "{}"'.format(data))
+        # print()
+        # print()
+    finally:
+        thread.put(port)
+
+def receive(message, address, thread):
+    p = thread.get()
+    data = pickle.loads(message)
+    send_data(p, thread, data)
+
+def main():
+    serverSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    serverSocket.bind((const.udpIP, const.udpPORT))
+    print("UDP server up and listening")
+
+    pool = multiprocessing.Pool(processes = 100)
+
+    poolManager = multiprocessing.Manager()
+    thread = poolManager.Queue()
+
+    for port in portList:
+        thread.put(port)
 
     while True:
-        msg, source = clientSocket.recvfrom(32)
+        message, address = serverSocket.recvfrom(999999)
+        # clientMsg = "Message from Client:{}".format(message)
+        # clientIP  = "Client IP Address:{}".format(address)
+        # print(clientMsg)
+        # print(clientIP)
 
-        data = pickle.loads(msg)
+        data = pool.apply_async(receive, (message, address, thread, serverSocket))
+        serverSocket.sendto(bytes("Data acknowleged!", "utf-8"), address)
 
-        print('Received message : "{}"'.format(data))
-
-        clientSocket.send(bytes("Data acknowleged!", "utf-8"))
+if __name__ == '__main__':
+    main()
