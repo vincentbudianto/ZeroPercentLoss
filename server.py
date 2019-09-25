@@ -29,8 +29,9 @@ def receive(message, address, thread):
 
 def main():
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    serverSocket.bind((const.udpIP, const.udpPORT))
+    serverSocket.bind((const.SERVER_IP, const.SERVER_PORT))
     print("UDP server up and listening")
+    print("Server IP: {} | PORT: {}".format(const.SERVER_IP, const.SERVER_PORT))
 
     pool = multiprocessing.Pool(processes = 100)
 
