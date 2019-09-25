@@ -1,2 +1,5 @@
 test.zip
 __pycache__
+.vscode
+source
+destination

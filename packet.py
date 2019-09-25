@@ -28,6 +28,7 @@ class Packet:
 
     def create_last_packet(self, file_chunk):
         self.create_packet_with_type(file_chunk, FIN)
+        return self.byte_array
 
     def to_byte_array(self):
         bits = self.type | self.id << ID_LENGTH
@@ -37,7 +38,8 @@ class Packet:
         baitarray += self.data
         return baitarray
 
-    def create_checksum(self, data):
+    @staticmethod
+    def create_checksum(data):
         appended = False
         if len(data)%2==1:
             data.append(0)
@@ -55,7 +57,9 @@ class Packet:
 
         return (checksum).to_bytes(2, byteorder="little")
 
-    def read_packet_from_bytes_array(self, bytes_array):
+    @staticmethod
+    def read_packet_from_bytes_array(bytes_array):
+        copy_byte = bytes_array
         data = bytes(bytes_array[7:])
         checksum = bytes_array[6] | (bytes_array[5] << 8)
 
@@ -66,12 +70,12 @@ class Packet:
         length = (bytes_array[4] << 8) | bytes_array[3]
 
         # del checksum
-        del bytes_array[5]
-        del bytes_array[5]
+        del copy_byte[5]
+        del copy_byte[5]
 
-        calculated_checksum = self.create_checksum(bytes_array)
+        calculated_checksum = Packet.create_checksum(copy_byte)
 
-        if (checksum == (calculated_checksum).from_bytes(2, byteorder="little")):
-            return True, [data, typevar, idvar, seq_num, length]            
+        if (checksum == int.from_bytes(calculated_checksum, byteorder="little")):
+            return (True, [data, typevar, idvar, seq_num, length])
 
-        return False, None
+        return (False, None)

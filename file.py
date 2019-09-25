@@ -1,15 +1,27 @@
 import os
 from pathlib import Path
+from const import *
 
 from math import floor, ceil
-
-THIRTYTWO_KB = 32768;
 
 HOME = Path.home()
 
 def get_current_directory():
     current_directory = os.getcwd()
     return current_directory
+
+def create_folder(folder_name):
+    current_directory = get_current_directory()
+    folder_directory_path = "{}/{}".format(current_directory, folder_name)
+    if not os.path.exists(folder_directory_path):
+        os.makedirs(folder_directory_path)
+    return folder_directory_path
+
+def get_source_directory():
+    return create_folder('source')
+
+def get_destination_directory():
+    return create_folder('destination')
 
 class File:
     def __init__(self, file_path):

@@ -11,9 +11,6 @@ import sys
 progress_bar = ProgressBar()
 
 def main():
-    clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    clientSocket.settimeout(5)
-
     file_list = []
 
     if (len(sys.argv) < 2):
@@ -27,45 +24,37 @@ def main():
         sys.exit()
 
     for filename in file_list:
+        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        counter = 0
+
         path = '{}/' + filename
-        file_path = filename.format(file.get_current_directory())
+        file_path = path.format(file.get_source_directory())
         file_obj = File(file_path)
 
         chunk_generator = file_obj.get_chunks_generator()
         num_of_chunk = file_obj.calculate_chunks_number()
 
-        packet_class = Packet(1)
-
-        dest_name = 'lala.' + filename[-3:]
-        new = open(dest_name, 'ab')
-
-        counter = 0
+        packet_class = Packet(counter)
         progress_bar.set_total(num_of_chunk)
-        
-        #Send file name
+
+        # Send file name
         clientSocket.sendto(filename.encode('utf-8'), (const.SERVER_IP, const.SERVER_PORT))
+        msg = clientSocket.recv(2)
+
+        receiver_port = int.from_bytes(msg, byteorder='little')
 
         for chunk in chunk_generator:
-            packet = packet_class.create_packet(chunk)
+            counter += 1
 
-            try:
-                clientSocket.sendto(packet, (const.SERVER_IP, const.SERVER_PORT))
-                data, address = clientSocket.recvfrom(1024)
-                new_chunk = packet_class.read_packet_from_bytes_array(packet)
-
-                counter += 1
-                progress_bar.printProgressBar(counter)
-
-                new.write(new_chunk)
-
-            except(TimeoutError):
-                print('No, response. Try again')
-
-            # send file to server
-            # receive acknowledgement from server
-
-        print(counter)
-
+            packet = None
+            if counter==num_of_chunk:
+                packet = packet_class.create_last_packet(chunk)
+            else:
+                packet = packet_class.create_packet(chunk)
+            clientSocket.sendto(packet, (const.SERVER_IP, receiver_port))
+            acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
+            progress_bar.printProgressBar(counter)
 
 if __name__ == '__main__':
     main()
