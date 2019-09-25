@@ -25,7 +25,7 @@ class ProgressBar:
         if (progress == self.total):
             self.finish_time = time.time()
             print('\nElapsed time: {}s\n'.format(self.finish_time-self.start_time))
-            print('\nLoading completed', end = '\n')
+            print('Loading completed\n', end = '\n')
             self.start_time = None
 
             # total_time = sekarang * total / progress
