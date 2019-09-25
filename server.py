@@ -9,11 +9,11 @@ portList = range(5001, 6000)
 
 def send_data(port, thread, data):
     sendSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sendSocket.bind((const.udpIP, port))
+    sendSocket.bind((const.SERVER_IP, port))
     # sendSocket.settimeout(5)
 
     try:
-        sendSocket.sendto(data, (const. udpIP, port+1))
+        sendSocket.sendto(data, (const. SERVER_IP, port+1))
         # print('port ==> ', port)
         # print()
         # print('Received message : "{}"'.format(data))
