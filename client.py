@@ -10,11 +10,10 @@ import time
 import sys
 
 progress_bar = ProgressBar()
-total_chunk = 0
 
 def send_thread(filename, server_address):
     clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # clientSocket.settimeout(5)
+    clientSocket.settimeout(5)
 
     counter = 0
 
@@ -40,17 +39,22 @@ def send_thread(filename, server_address):
         counter += 1
 
         packet = None
+        success = False
 
         if counter==num_of_chunk:
             packet = packet_class.create_last_packet(chunk)
         else:
             packet = packet_class.create_packet(chunk)
 
-        clientSocket.sendto(packet, (server_address[0], receiver_port))
-        acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
+        while not(success):
+            try:
+                clientSocket.sendto(packet, (server_address[0], receiver_port))
+                acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
+                success = True
+            except(TimeoutError):
+                print('<<<     RETRYING    >>>')
 
         progress_bar.printProgressBar(counter, filename)
-
 
 def main():
     file_list = []
@@ -66,9 +70,9 @@ def main():
         sys.exit()
 
     # SERVER_IP = input("Server IP Address: ")
-    SERVER_IP = '192.168.43.136'
     # SERVER_PORT = int(input("Server Port: "))
-    SERVER_PORT = 5000
+    SERVER_IP = '192.168.43.136'
+    SERVER_PORT = 4999
 
     pool = multiprocessing.Pool(processes = 100)
 
