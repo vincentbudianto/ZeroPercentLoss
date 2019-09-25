@@ -41,6 +41,9 @@ def main():
 
         counter = 0
         progress_bar.set_total(num_of_chunk)
+        
+        #Send file name
+        clientSocket.sendto(filename.encode('utf-8'), (const.SERVER_IP, const.SERVER_PORT))
 
         for chunk in chunk_generator:
             packet = packet_class.create_packet(chunk)
