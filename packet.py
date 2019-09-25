@@ -15,7 +15,7 @@ class Packet:
         self.data = file_chunk
 
         self.byte_array = self.to_byte_array()
-        self.checksum = self.create_checksum()
+        self.checksum = self.create_checksum(self.byte_array)
 
         self.byte_array.insert(5, self.checksum[0])
         self.byte_array.insert(5, self.checksum[1])
@@ -37,21 +37,21 @@ class Packet:
         baitarray += self.data
         return baitarray
 
-    def create_checksum(self):
+    def create_checksum(self, data):
         appended = False
-        if len(self.byte_array)%2==1:
-            self.byte_array.append(0)
+        if len(data)%2==1:
+            data.append(0)
             appended=True
 
         checksum = 0
         idx = 0
-        while idx < len(self.byte_array):
-            current_num = self.byte_array[idx] | self.byte_array[idx+1]<<8
+        while idx < len(data):
+            current_num = data[idx] | data[idx+1]<<8
             checksum = checksum ^ current_num
             idx += 2
 
         if appended:
-            del self.byte_array[-1]
+            del data[-1]
 
         return (checksum).to_bytes(2, byteorder="little")
 
@@ -65,7 +65,13 @@ class Packet:
         seq_num = (bytes_array[2] << 8)| bytes_array[1]
         length = (bytes_array[4] << 8) | bytes_array[3]
 
-        for i in range (7):
-            del bytes_array[0]
+        # del checksum
+        del bytes_array[5]
+        del bytes_array[5]
 
-        return data
+        calculated_checksum = self.create_checksum(bytes_array)
+
+        if (checksum == (calculated_checksum).from_bytes(2, byteorder="little")):
+            return True, [data, typevar, idvar, seq_num, length]            
+
+        return False, None
