@@ -10,6 +10,7 @@ import time
 import sys
 
 progress_bar = ProgressBar()
+
 def send_thread(filename, client_address, clientSocket):
     counter = 0
 

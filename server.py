@@ -66,11 +66,6 @@ def main():
         file_name = file_name.decode('utf-8')
         print(file_name)
 
-        # clientMsg = "Message from Client:{}".format(message)
-        # clientIP  = "Client IP Address:{}".format(address)
-        # print(clientMsg)
-        # print(clientIP)
-
         # create new receiver process
         new_receiver_process = pool.apply_async(receive_thread, (file_name, client_address, port_queue))
 
