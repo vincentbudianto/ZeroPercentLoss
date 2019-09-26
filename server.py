@@ -17,13 +17,12 @@ def get_my_ip():
 
 def receive_thread(file_name, client_address, thread):
     receiver_port = thread.get()
-    print('getting port: {}, client: {}'.format(receiver_port, client_address))
+    print('acquiring port: {}, client: {}'.format(receiver_port, client_address))
     receiver_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     receiver_socket.bind((get_my_ip(), receiver_port))
 
     # send our port
     port_message = receiver_port.to_bytes(2, byteorder='little')
-    print('sending port, {}'.format(client_address))
     receiver_socket.sendto(port_message, client_address)
 
     # opening to be written file
@@ -71,6 +70,7 @@ def receive_thread(file_name, client_address, thread):
         if (packet_data[const.INDEX_TYPEVAR] == FIN):
             receiver_socket.sendto(const.FINACK.to_bytes(1, byteorder='little'), client_address)
             destination_file.close()
+            print('File: "{}" has finished transfer'.format(file_name))
             break
         else:
             receiver_socket.sendto(const.ACK.to_bytes(1, byteorder='little'), client_address)
@@ -95,7 +95,7 @@ def main():
     while True:
         file_name, client_address = server_socket.recvfrom(const.THIRTYTWO_KB)
         file_name = file_name.decode('utf-8')
-        print('Receiving file: %s\n'% file_name)
+        print('Receiving file: {}'.format(file_name))
 
         # create new receiver process
         new_receiver_process = pool.apply_async(receive_thread, (file_name, client_address, port_queue))
