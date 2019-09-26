@@ -12,7 +12,7 @@ class ProgressBar:
         self.total = total
 
     def printProgressBar (self, progress, filename, decimals = 0, char = '█'):
-        if (not self.start_time) :
+        if (not self.start_time):
             self.start_time = time.time()
         current_time = time.time() - self.start_time
 

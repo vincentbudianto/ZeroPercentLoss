@@ -59,7 +59,7 @@ def receive_thread(file_name, client_address, thread):
 
         # send ack
         file_chuck = packet_data[const.INDEX_DATA]
-        # if counter%150==0:
+        # if ((counter % 150) == 0):
         #     delayed_checksum = packet_data[const.INDEX_CHECKSUM]
         #     print('delayed')
         #     time.sleep(2)
@@ -68,12 +68,11 @@ def receive_thread(file_name, client_address, thread):
         destination_file.write(file_chuck)
         latest_seq_num = seq_num
 
-        if packet_data[const.INDEX_TYPEVAR] == FIN:
+        if (packet_data[const.INDEX_TYPEVAR] == FIN):
             receiver_socket.sendto(const.FINACK.to_bytes(1, byteorder='little'), client_address)
             destination_file.close()
             break
         else:
-
             receiver_socket.sendto(const.ACK.to_bytes(1, byteorder='little'), client_address)
 
 def main():
