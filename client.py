@@ -48,7 +48,7 @@ def send_thread(filename, client_address):
             clientSocket.sendto(packet, (const.SERVER_IP, receiver_port))
             acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
             
-            progress_bar.printProgressBar(counter)
+            progress_bar.printProgressBar(counter, filename)
     except(TimeoutError):
         print('Time out error detected. Please try again')
 
@@ -69,8 +69,6 @@ def main():
     pool = multiprocessing.Pool(processes = 100)
 
     for filename in file_list:
-        # clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        print(filename)
         new_sender_process = pool.apply_async(send_thread, (filename, const.SERVER_IP))
     
     pool.close()

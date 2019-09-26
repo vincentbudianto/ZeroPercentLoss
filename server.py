@@ -53,7 +53,6 @@ def receive_thread(file_name, client_address, thread):
 def main():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.bind((const.SERVER_IP, const.SERVER_PORT))
-    server_socket.settimeout(5)
     print("UDP server up and listening")
     print("Server IP: {} | PORT: {}".format(const.SERVER_IP, const.SERVER_PORT))
 
@@ -65,16 +64,13 @@ def main():
     for port in portList:
         port_queue.put(port)
 
-    try:
-        while True:
-            file_name, client_address = server_socket.recvfrom(const.THIRTYTWO_KB)
-            file_name = file_name.decode('utf-8')
-            print('Receiving file: %s\n'% file_name)
+    while True:
+        file_name, client_address = server_socket.recvfrom(const.THIRTYTWO_KB)
+        file_name = file_name.decode('utf-8')
+        print('Receiving file: %s\n'% file_name)
 
-            # create new receiver process
-            new_receiver_process = pool.apply_async(receive_thread, (file_name, client_address, port_queue))
-    except(TimeoutError):
-        print('Timeout error detected. Please try again.')
+        # create new receiver process
+        new_receiver_process = pool.apply_async(receive_thread, (file_name, client_address, port_queue))
 
 if __name__ == '__main__':
     main()

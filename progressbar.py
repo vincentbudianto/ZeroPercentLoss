@@ -11,7 +11,7 @@ class ProgressBar:
     def set_total(self, total):
         self.total = total
 
-    def printProgressBar (self, progress, decimals = 0, char = '█'):
+    def printProgressBar (self, progress, filename, decimals = 0, char = '█'):
         if (not self.start_time) :
             self.start_time = time.time()
         current_time = time.time() - self.start_time
@@ -27,5 +27,5 @@ class ProgressBar:
         if (progress == self.total):
             self.finish_time = time.time()
             print('\nElapsed time: {}s\n'.format(self.finish_time-self.start_time))
-            print('Loading completed\n', end = '\n')
+            print('<<<     %s completed     >>>\n\n' % filename, end = '\n')
             self.start_time = None
