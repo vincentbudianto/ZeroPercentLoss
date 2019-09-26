@@ -10,7 +10,6 @@ import time
 import sys
 import hashlib
 
-_TERMINATE = False
 progress_bar = ProgressBar()
 
 def send_thread(filename, server_address):
@@ -38,9 +37,6 @@ def send_thread(filename, server_address):
 
     receiver_port = int.from_bytes(server_port, byteorder='little')
     for chunk in chunk_generator:
-        if (_TERMINATE):
-            thread.terminate()
-
         counter += 1
 
         packet = None
@@ -66,7 +62,6 @@ def send_thread(filename, server_address):
                 retry_counter += 1
 
         if(stop):
-            thread.terminate()
             break
 
         progress_bar.printProgressBar(counter, filename)
@@ -92,7 +87,6 @@ def main():
     for filename in file_list:
         new_sender_process = pool.apply_async(send_thread, (filename, (SERVER_IP, SERVER_PORT)))
 
-    _TERMINATE = True
     pool.close()
     pool.join()
 

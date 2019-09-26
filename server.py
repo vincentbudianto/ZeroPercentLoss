@@ -77,11 +77,11 @@ def receive_thread(file_name, client_address, thread):
             receiver_socket.sendto(const.ACK.to_bytes(1, byteorder='little'), client_address)
 
 def main():
-    SERVER_PORT = input("Enter server port: ")
+    SERVER_PORT = int(input("Enter server port: "))
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_socket.bind((get_my_ip(), SERVER_PORT)
+    server_socket.bind((get_my_ip(), SERVER_PORT))
     print("UDP server up and listening")
-    print("Server IP: {} | PORT: {}".format(get_my_ip(), SERVER_PORT)
+    print("Server IP: {} | PORT: {}".format(get_my_ip(), SERVER_PORT))
 
     pool = multiprocessing.Pool(processes = 100)
 
