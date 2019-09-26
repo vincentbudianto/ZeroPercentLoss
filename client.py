@@ -23,7 +23,11 @@ def send_thread(filename, server_address):
 
     path = '{}/' + filename
     file_path = path.format(file.get_source_directory())
-    file_obj = File(file_path)
+
+    try:
+        file_obj = File(file_path)
+    except FileNotFoundError:
+        print('\n\n<<<     FILE NOT FOUND     >>>\n')
 
     chunk_generator = file_obj.get_chunks_generator()
     num_of_chunk = file_obj.calculate_chunks_number()
@@ -42,7 +46,7 @@ def send_thread(filename, server_address):
         packet = None
         success = False
 
-        if counter==num_of_chunk:
+        if (counter == num_of_chunk):
             packet = packet_class.create_last_packet(chunk)
         else:
             packet = packet_class.create_packet(chunk)
@@ -61,7 +65,7 @@ def send_thread(filename, server_address):
                 print('\n\n<<<     RETRYING    >>>', end='\r')
                 retry_counter += 1
 
-        if(stop):
+        if (stop):
             break
 
         progress_bar.printProgressBar(counter, filename)

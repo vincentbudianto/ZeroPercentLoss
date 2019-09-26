@@ -30,7 +30,7 @@ def receive_thread(file_name, client_address, thread):
     destination_path = get_destination_directory()
     full_path = destination_path+'/'+file_name
 
-    if os.path.exists(full_path):
+    if (os.path.exists(full_path)):
         os.remove(full_path)
 
     destination_file = open(full_path, 'ab')
@@ -46,14 +46,14 @@ def receive_thread(file_name, client_address, thread):
         valid, packet_data = Packet.read_packet_from_bytes_array(bytearray(packet))
 
         # verify packet
-        if not valid:
+        if not(valid):
             continue
 
         seq_num = packet_data[const.INDEX_SEQNUM]
-        if seq_num!=(latest_seq_num+1):
+        if (seq_num != (latest_seq_num + 1)):
             continue
 
-        if delayed_checksum:
+        if (delayed_checksum):
             print(str(delayed_checksum)+'    '+str(packet_data[const.INDEX_CHECKSUM]))
             delayed_checksum = None
 
