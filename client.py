@@ -12,9 +12,9 @@ import sys
 progress_bar = ProgressBar()
 total_chunk = 0
 
-def send_thread(filename, client_address):
+def send_thread(filename, server_address):
     clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    clientSocket.settimeout(5)
+    # clientSocket.settimeout(5)
 
     try:
         counter = 0
@@ -28,9 +28,10 @@ def send_thread(filename, client_address):
 
         packet_class = Packet(counter)
         progress_bar.set_total(num_of_chunk)
-        
+
         # Send file name
-        clientSocket.sendto(filename.encode('utf-8'), (const.SERVER_IP, const.SERVER_PORT))
+        print(server_address)
+        clientSocket.sendto(filename.encode('utf-8'), server_address)
         msg = clientSocket.recv(2)
 
         receiver_port = int.from_bytes(msg, byteorder='little')
@@ -45,14 +46,14 @@ def send_thread(filename, client_address):
             else:
                 packet = packet_class.create_packet(chunk)
 
-            clientSocket.sendto(packet, (const.SERVER_IP, receiver_port))
+            clientSocket.sendto(packet, server_address)
             acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
-            
+
             progress_bar.printProgressBar(counter, filename)
     except(TimeoutError):
         print('Time out error detected. Please try again')
 
-        
+
 def main():
     file_list = []
 
@@ -66,11 +67,14 @@ def main():
         print ("You cannot send more than 5 file")
         sys.exit()
 
+    SERVER_IP = input("Server IP Address: ")
+    SERVER_PORT = int(input("Server Port: "))
+
     pool = multiprocessing.Pool(processes = 100)
 
     for filename in file_list:
-        new_sender_process = pool.apply_async(send_thread, (filename, const.SERVER_IP))
-    
+        new_sender_process = pool.apply_async(send_thread, (filename, (SERVER_IP, SERVER_PORT)))
+
     pool.close()
     pool.join()
 
