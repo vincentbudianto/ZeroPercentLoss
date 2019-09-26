@@ -102,12 +102,13 @@ def main():
     max_length = len(max(file_list, key=len))
     progress_bar_class = ProgressBar(max_length)
 
-    while True:
-        for idx, progress in enumerate(progress_poll):
-            progress_bar_class.print_progress_bar(progress.value, file_list[idx])
+    while processes:
+        processes = [process for process in processes if process.is_alive()]
+        for idx, process in enumerate(processes):
+            progress_bar_class.print_progress_bar(progress_poll[idx].value, file_list[idx])
         sys.stdout.write(u"\u001b[2J")
-        time.sleep(0.01)
+        time.sleep(0.1)
 
-    for process in processes : process.join()
+    print('Transfer complete!')
 if __name__ == '__main__':
     main()
