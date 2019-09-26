@@ -1,45 +1,60 @@
-import struct
-import socket
+from packet import *
+from file import File
+from progressbar import *
 import const
-import os
-from pathlib import Path
-from math import floor, ceil
+import file
+import pickle
+import socket
+import time
+import sys
 
-EIGHT_KB = 8;
+progress_bar = ProgressBar()
 
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s.connect((socket.gethostname(), const.SERVER_PORT))
+def main():
+    file_list = []
 
-def readFileInChunks(file_object, chunk_size = EIGHT_KB):
-    """Lazy function (generator) to read a file piece by piece.
-    Default chunk size: 8bytes"""
+    if (len(sys.argv) < 2):
+        print ("You must specify file name in argument")
+        sys.exit()
+    elif (len(sys.argv) < 7):
+        for i in range(1, len(sys.argv)):
+            file_list.append(sys.argv[i])
+    else:
+        print ("You cannot send more than 5 file")
+        sys.exit()
 
-    num_of_chunk = calculate_chunks_number(file_object, chunk_size)
+    for filename in file_list:
+        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    for i in range(num_of_chunk):
-        data = file_object.read(chunk_size)
-        yield data
+        counter = 0
 
-def calculate_chunks_number(file_object, chunk_size = EIGHT_KB):
-    file_size = os.fstat(file_object.fileno()).st_size
-    num_of_chunk = ceil(file_size/chunk_size)
-    return num_of_chunk
+        path = '{}/' + filename
+        file_path = path.format(file.get_source_directory())
+        file_obj = File(file_path)
 
+        chunk_generator = file_obj.get_chunks_generator()
+        num_of_chunk = file_obj.calculate_chunks_number()
 
-home = Path.home()
+        packet_class = Packet(counter)
+        progress_bar.set_total(num_of_chunk)
 
-f = open("{}/Downloads/source-sans-pro.zip".format(home), "rb")
+        # Send file name
+        clientSocket.sendto(filename.encode('utf-8'), (const.SERVER_IP, const.SERVER_PORT))
+        msg = clientSocket.recv(2)
 
-print(calculate_chunks_number(f))
-a = 0
+        receiver_port = int.from_bytes(msg, byteorder='little')
 
-for piece in readFileInChunks(f):
-    a+=1
+        for chunk in chunk_generator:
+            counter += 1
 
-print(a)
+            packet = None
+            if counter==num_of_chunk:
+                packet = packet_class.create_last_packet(chunk)
+            else:
+                packet = packet_class.create_packet(chunk)
+            clientSocket.sendto(packet, (const.SERVER_IP, receiver_port))
+            acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
+            progress_bar.printProgressBar(counter)
 
-# while True:
-#     msg = s.recv(8)
-#     print(msg.decode("utf-8"))
-
-
+if __name__ == '__main__':
+    main()
