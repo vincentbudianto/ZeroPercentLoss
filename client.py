@@ -84,8 +84,8 @@ def main():
         print ("You cannot send more than 5 file")
         sys.exit()
 
-    # SERVER_IP = input("Server IP Address: ")
-    # SERVER_PORT = int(input("Server Port: "))
+    SERVER_IP = input("Server IP Address: ")
+    SERVER_PORT = int(input("Server Port: "))
 
     pool = multiprocessing.Pool(processes = 100)
 

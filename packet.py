@@ -76,6 +76,6 @@ class Packet:
         calculated_checksum = Packet.create_checksum(copy_byte)
 
         if (checksum == int.from_bytes(calculated_checksum, byteorder="little")):
-            return (True, [data, typevar, idvar, seq_num, length])
+            return (True, [data, typevar, idvar, seq_num, length, checksum])
 
         return (False, None)
