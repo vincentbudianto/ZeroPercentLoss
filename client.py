@@ -16,42 +16,40 @@ def send_thread(filename, server_address):
     clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     # clientSocket.settimeout(5)
 
-    try:
-        counter = 0
+    counter = 0
 
-        path = '{}/' + filename
-        file_path = path.format(file.get_source_directory())
-        file_obj = File(file_path)
+    path = '{}/' + filename
+    file_path = path.format(file.get_source_directory())
+    file_obj = File(file_path)
 
-        chunk_generator = file_obj.get_chunks_generator()
-        num_of_chunk = file_obj.calculate_chunks_number()
+    chunk_generator = file_obj.get_chunks_generator()
+    num_of_chunk = file_obj.calculate_chunks_number()
 
-        packet_class = Packet(counter)
-        progress_bar.set_total(num_of_chunk)
+    packet_class = Packet(counter)
+    progress_bar.set_total(num_of_chunk)
 
-        # Send file name
-        print(server_address)
-        clientSocket.sendto(filename.encode('utf-8'), server_address)
-        msg = clientSocket.recv(2)
+    # Send file name
+    print(filename)
+    print(type(filename))
+    clientSocket.sendto(filename.encode('utf-8').strip(), server_address)
+    server_port = clientSocket.recv(2)
 
-        receiver_port = int.from_bytes(msg, byteorder='little')
+    receiver_port = int.from_bytes(server_port, byteorder='little')
 
-        for chunk in chunk_generator:
-            counter += 1
+    for chunk in chunk_generator:
+        counter += 1
 
-            packet = None
+        packet = None
 
-            if counter==num_of_chunk:
-                packet = packet_class.create_last_packet(chunk)
-            else:
-                packet = packet_class.create_packet(chunk)
+        if counter==num_of_chunk:
+            packet = packet_class.create_last_packet(chunk)
+        else:
+            packet = packet_class.create_packet(chunk)
 
-            clientSocket.sendto(packet, server_address)
-            acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
+        clientSocket.sendto(packet, (server_address[0], receiver_port))
+        acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
 
-            progress_bar.printProgressBar(counter, filename)
-    except(TimeoutError):
-        print('Time out error detected. Please try again')
+        progress_bar.printProgressBar(counter, filename)
 
 
 def main():
@@ -67,8 +65,10 @@ def main():
         print ("You cannot send more than 5 file")
         sys.exit()
 
-    SERVER_IP = input("Server IP Address: ")
-    SERVER_PORT = int(input("Server Port: "))
+    # SERVER_IP = input("Server IP Address: ")
+    SERVER_IP = '192.168.43.136'
+    # SERVER_PORT = int(input("Server Port: "))
+    SERVER_PORT = 5000
 
     pool = multiprocessing.Pool(processes = 100)
 
