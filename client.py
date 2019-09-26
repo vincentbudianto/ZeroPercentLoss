@@ -1,5 +1,5 @@
-from packet import *
 from file import File
+from packet import *
 from progressbar import *
 import const
 import file
@@ -10,40 +10,49 @@ import time
 import sys
 
 progress_bar = ProgressBar()
+total_chunk = 0
 
-def send_thread(filename, client_address, clientSocket):
-    counter = 0
+def send_thread(filename, client_address):
+    clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    clientSocket.settimeout(5)
 
-    path = '{}/' + filename
-    file_path = path.format(file.get_source_directory())
-    file_obj = File(file_path)
+    try:
+        counter = 0
 
-    chunk_generator = file_obj.get_chunks_generator()
-    num_of_chunk = file_obj.calculate_chunks_number()
+        path = '{}/' + filename
+        file_path = path.format(file.get_source_directory())
+        file_obj = File(file_path)
 
-    packet_class = Packet(counter)
-    progress_bar.set_total(num_of_chunk)
+        chunk_generator = file_obj.get_chunks_generator()
+        num_of_chunk = file_obj.calculate_chunks_number()
 
-    # Send file name
-    clientSocket.sendto(filename.encode('utf-8'), (const.SERVER_IP, const.SERVER_PORT))
-    msg = clientSocket.recv(2)
+        packet_class = Packet(counter)
+        progress_bar.set_total(num_of_chunk)
+        
+        # Send file name
+        clientSocket.sendto(filename.encode('utf-8'), (const.SERVER_IP, const.SERVER_PORT))
+        msg = clientSocket.recv(2)
 
-    receiver_port = int.from_bytes(msg, byteorder='little')
+        receiver_port = int.from_bytes(msg, byteorder='little')
 
-    for chunk in chunk_generator:
-        counter += 1
+        for chunk in chunk_generator:
+            counter += 1
 
-        packet = None
+            packet = None
 
-        if counter==num_of_chunk:
-            packet = packet_class.create_last_packet(chunk)
-        else:
-            packet = packet_class.create_packet(chunk)
+            if counter==num_of_chunk:
+                packet = packet_class.create_last_packet(chunk)
+            else:
+                packet = packet_class.create_packet(chunk)
 
-        clientSocket.sendto(packet, (const.SERVER_IP, receiver_port))
-        acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
-        progress_bar.printProgressBar(counter)
-    
+            clientSocket.sendto(packet, (const.SERVER_IP, receiver_port))
+            acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
+            
+            progress_bar.printProgressBar(counter)
+    except(TimeoutError):
+        print('Time out error detected. Please try again')
+
+        
 def main():
     file_list = []
 
@@ -60,9 +69,9 @@ def main():
     pool = multiprocessing.Pool(processes = 100)
 
     for filename in file_list:
-        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         print(filename)
-        new_sender_process = pool.apply_async(send_thread, (filename, const.SERVER_IP, clientSocket))
+        new_sender_process = pool.apply_async(send_thread, (filename, const.SERVER_IP))
     
     pool.close()
     pool.join()
