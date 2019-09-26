@@ -1,6 +1,3 @@
-SERVER_IP = "127.0.0.1"
-SERVER_PORT = 5000
-
 DATA    = int('0x0', 16)
 ACK     = int('0x1', 16)
 FIN     = int('0x2', 16)
