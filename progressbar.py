@@ -27,5 +27,5 @@ class ProgressBar:
         if (progress == self.total):
             self.finish_time = time.time()
             print('\nElapsed time: {}s\n'.format(self.finish_time-self.start_time))
-            print('<<<     %s completed     >>>\n\n' % filename, end = '\n')
+            print('<<<     %s completed     >>>\n' % filename)
             self.start_time = None
