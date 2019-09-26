@@ -1,11 +1,11 @@
+from file import *
+from packet import Packet
 import const
 import multiprocessing
-from packet import Packet
+import os
 import socket
 import struct
 import time
-from file import *
-import os
 
 portList = range(5001, 6000)
 
@@ -73,7 +73,6 @@ def main():
 
         # create new receiver process
         new_receiver_process = pool.apply_async(receive_thread, (file_name, client_address, port_queue))
-
 
 if __name__ == '__main__':
     main()

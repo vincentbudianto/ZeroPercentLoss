@@ -1,45 +1,70 @@
-import struct
-import socket
+from packet import *
+from file import File
+from progressbar import *
 import const
-import os
-from pathlib import Path
-from math import floor, ceil
+import file
+import multiprocessing
+import pickle
+import socket
+import time
+import sys
 
-EIGHT_KB = 8;
+progress_bar = ProgressBar()
+def send_thread(filename, client_address, clientSocket):
+    counter = 0
 
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s.connect((socket.gethostname(), const.SERVER_PORT))
+    path = '{}/' + filename
+    file_path = path.format(file.get_source_directory())
+    file_obj = File(file_path)
 
-def readFileInChunks(file_object, chunk_size = EIGHT_KB):
-    """Lazy function (generator) to read a file piece by piece.
-    Default chunk size: 8bytes"""
+    chunk_generator = file_obj.get_chunks_generator()
+    num_of_chunk = file_obj.calculate_chunks_number()
 
-    num_of_chunk = calculate_chunks_number(file_object, chunk_size)
+    packet_class = Packet(counter)
+    progress_bar.set_total(num_of_chunk)
 
-    for i in range(num_of_chunk):
-        data = file_object.read(chunk_size)
-        yield data
+    # Send file name
+    clientSocket.sendto(filename.encode('utf-8'), (const.SERVER_IP, const.SERVER_PORT))
+    msg = clientSocket.recv(2)
 
-def calculate_chunks_number(file_object, chunk_size = EIGHT_KB):
-    file_size = os.fstat(file_object.fileno()).st_size
-    num_of_chunk = ceil(file_size/chunk_size)
-    return num_of_chunk
+    receiver_port = int.from_bytes(msg, byteorder='little')
 
+    for chunk in chunk_generator:
+        counter += 1
 
-home = Path.home()
+        packet = None
 
-f = open("{}/Downloads/source-sans-pro.zip".format(home), "rb")
+        if counter==num_of_chunk:
+            packet = packet_class.create_last_packet(chunk)
+        else:
+            packet = packet_class.create_packet(chunk)
 
-print(calculate_chunks_number(f))
-a = 0
+        clientSocket.sendto(packet, (const.SERVER_IP, receiver_port))
+        acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
+        progress_bar.printProgressBar(counter)
+    
+def main():
+    file_list = []
 
-for piece in readFileInChunks(f):
-    a+=1
+    if (len(sys.argv) < 2):
+        print ("You must specify file name in argument")
+        sys.exit()
+    elif (len(sys.argv) < 7):
+        for i in range(1, len(sys.argv)):
+            file_list.append(sys.argv[i])
+    else:
+        print ("You cannot send more than 5 file")
+        sys.exit()
 
-print(a)
+    pool = multiprocessing.Pool(processes = 100)
 
-# while True:
-#     msg = s.recv(8)
-#     print(msg.decode("utf-8"))
+    for filename in file_list:
+        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        print(filename)
+        new_sender_process = pool.apply_async(send_thread, (filename, const.SERVER_IP, clientSocket))
+    
+    pool.close()
+    pool.join()
 
-
+if __name__ == '__main__':
+    main()
