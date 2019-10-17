@@ -110,7 +110,6 @@ def main():
         sys.stdout.write(u"\u001b[2J")
         time.sleep(0.1)
 
-    print('Transfer complete!')
     print('Transfer complete! {}s elapsed'.format(time.time()-all_start_time))
 if __name__ == '__main__':
     main()

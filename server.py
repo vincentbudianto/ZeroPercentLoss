@@ -38,6 +38,7 @@ def receive_thread(file_name, client_address, thread):
     # receiving data
     delayed_checksum = None
     latest_seq_num = -1
+    not_matching = 0
     while True:
         counter += 1
         packet = receiver_socket.recv(35000)
@@ -50,11 +51,18 @@ def receive_thread(file_name, client_address, thread):
 
         seq_num = packet_data[const.INDEX_SEQNUM]
         if (seq_num != (latest_seq_num + 1)):
+            not_matching +=1
+            print('seq not matched!', seq_num, latest_seq_num)
+            if not_matching > 2:
+                if (packet_data[const.INDEX_TYPEVAR] == FIN):
+                    receiver_socket.sendto(const.FINACK.to_bytes(1, byteorder='little'), client_address)
+                else:
+                    receiver_socket.sendto(const.ACK.to_bytes(1, byteorder='little'), client_address)
             continue
 
-        if (delayed_checksum):
-            print(str(delayed_checksum)+'    '+str(packet_data[const.INDEX_CHECKSUM]))
-            delayed_checksum = None
+        # if (delayed_checksum):
+        #     print(str(delayed_checksum)+'    '+str(packet_data[const.INDEX_CHECKSUM]))
+        #     delayed_checksum = None
 
         # send ack
         file_chuck = packet_data[const.INDEX_DATA]
@@ -65,8 +73,9 @@ def receive_thread(file_name, client_address, thread):
         #     continue
 
         destination_file.write(file_chuck)
+        not_matching = 0
         latest_seq_num = seq_num
-
+        # print('---------')
         if (packet_data[const.INDEX_TYPEVAR] == FIN):
             receiver_socket.sendto(const.FINACK.to_bytes(1, byteorder='little'), client_address)
             destination_file.close()
