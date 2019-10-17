@@ -11,6 +11,8 @@ import time
 import sys
 import hashlib
 from math import ceil
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 def send_thread(filename, server_address, progress, lock):
@@ -41,15 +43,14 @@ def send_thread(filename, server_address, progress, lock):
 
     receiver_port = int.from_bytes(server_port, byteorder='little')
 
+    next_packet = packet_class.create_packet(next(chunk_generator))
+    cur_packet = None
     for chunk in chunk_generator:
         counter += 1
 
         success = False
 
-        if (counter == num_of_chunk):
-            packet = packet_class.create_last_packet(chunk)
-        else:
-            packet = packet_class.create_packet(chunk)
+        cur_packet = next_packet
 
         while not(success):
             if (retry_counter > 9):
@@ -57,12 +58,17 @@ def send_thread(filename, server_address, progress, lock):
                 stop = True
                 break
             try:
-                clientSocket.sendto(packet, (server_address[0], receiver_port))
+                clientSocket.sendto(cur_packet, (server_address[0], receiver_port))
+                if (counter == num_of_chunk-1 and retry_counter==0):
+                    next_packet = packet_class.create_last_packet(chunk)
+                elif (counter < num_of_chunk-1 and retry_counter==0):
+                    next_packet = packet_class.create_packet(chunk)
+
                 acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
                 success = True
                 retry_counter = 0
 
-            except:
+            except Exception as e:
                 print('\n\n<<<     RETRYING    >>>', end='\r')
                 retry_counter += 1
 
@@ -72,6 +78,11 @@ def send_thread(filename, server_address, progress, lock):
         progress_percent = ceil(counter/num_of_chunk*100.0)
         with lock:
             progress.value = progress_percent
+
+    clientSocket.sendto(next_packet, (server_address[0], receiver_port))
+    acknowledgement =  int.from_bytes(clientSocket.recv(1024), byteorder='little')
+
+
 
 def main():
     file_list = []
@@ -110,7 +121,6 @@ def main():
         sys.stdout.write(u"\u001b[2J")
         time.sleep(0.1)
 
-    print('Transfer complete!')
     print('Transfer complete! {}s elapsed'.format(time.time()-all_start_time))
 if __name__ == '__main__':
     main()
